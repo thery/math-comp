@@ -61,39 +61,36 @@ Declare Scope C_expanded_scope.
 Import Order.TTheory GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Section Foo.
 
-Definition L := tag Fundamental_Theorem_of_Algebraics.
+HB.factory Record Complex L of GRing.ClosedField L := {
+  conj :  {rmorphism L -> L};
+  conjK : involutive conj;
+  conj_nt : ~ conj =1 id
+}.
 
-Definition conjL : {rmorphism L -> L} :=
-  s2val (tagged Fundamental_Theorem_of_Algebraics).
-
-Fact conjL_K : involutive conjL.
-Proof. exact: s2valP (tagged Fundamental_Theorem_of_Algebraics). Qed.
-
-Fact conjL_nt : ~ conjL =1 id.
-Proof. exact: s2valP' (tagged Fundamental_Theorem_of_Algebraics). Qed.
+HB.builders Context L of Complex L.
 
 Lemma nz2: 2%:R != 0 :> L.
 Proof.
-  apply/eqP=> char2; apply: conjL_nt => e; apply/eqP/idPn=> eJ.
+  apply/eqP=> char2; apply: conj_nt => e; apply/eqP/idPn=> eJ.
   have opp_id x: - x = x :> L.
     by apply/esym/eqP; rewrite -addr_eq0 -mulr2n -mulr_natl char2 mul0r.
   have{} char2: 2 \in [char L] by apply/eqP.
-  without loss{eJ} eJ: e / conjL e = e + 1.
-    move/(_ (e / (e + conjL e))); apply.
-    rewrite fmorph_div rmorphD conjL_K -{1}[conjL e](addNKr e) mulrDl.
+  without loss{eJ} eJ: e / conj e = e + 1.
+    move/(_ (e / (e + conj e))); apply.
+    rewrite fmorph_div rmorphD conjK -{1}[conj e](addNKr e) mulrDl.
     by rewrite opp_id (addrC e) divff // addr_eq0 opp_id.
-  pose a := e * conjL e; have aJ: conjL a = a by rewrite rmorphM conjL_K mulrC.
+  pose a := e * conj e; have aJ: conj a = a by rewrite rmorphM conjK mulrC.
   have [w Dw] := @solve_monicpoly _ 2 (nth 0 [:: e * a; - 1]) isT.
   have{} Dw: w ^+ 2 + w = e * a.
     by rewrite Dw !big_ord_recl big_ord0 /= mulr1 mulN1r addr0 subrK.
-  pose b := w + conjL w; have bJ: conjL b = b by rewrite rmorphD conjL_K addrC.
+  pose b := w + conj w; have bJ: conj b = b by rewrite rmorphD conjK addrC.
   have Db2: b ^+ 2 + b = a.
     rewrite -Frobenius_autE // rmorphD addrACA Dw /= Frobenius_autE -rmorphX.
     by rewrite -rmorphD Dw rmorphM aJ eJ -mulrDl -{1}[e]opp_id addKr mul1r.
-  have /eqP[] := oner_eq0 L; apply: (addrI b); rewrite addr0 -{2}bJ.
-  have: (b + e) * (b + conjL e) == 0.
+  have /eqP[] := oner_eq0 [ringType of L]; 
+    apply: (addrI b); rewrite addr0 -{2}bJ.
+  have: (b + e) * (b + conj e) == 0.
     (* FIX ME : had to add pattern selection *)
     rewrite mulrDl 2![_ * (b + _)]mulrDr -/a.
     rewrite addrA addr_eq0 opp_id (mulrC e) -addrA.
@@ -127,22 +124,22 @@ Definition i := sqrt (- 1).
 Lemma sqrMi x: (i * x) ^+ 2 = - x ^+ 2.
 Proof. by rewrite exprMn sqrtK mulN1r. Qed.
 
-Lemma iJ : conjL i = - i.
+Lemma iJ : conj i = - i.
 Proof.
   have nz2 := nz2. 
-  have /sqrtE[b]: conjL i ^+ 2 = - 1 by rewrite -rmorphX sqrtK rmorphN1.
+  have /sqrtE[b]: conj i ^+ 2 = - 1 by rewrite -rmorphX sqrtK rmorphN1.
   rewrite mulr_sign -/i; case: b => // Ri.
-  case: conjL_nt => z; wlog zJ: z / conjL z = - z.
-    move/(_ (z - conjL z)); rewrite !rmorphB conjL_K opprB => zJ.
+  case: conj_nt => z; wlog zJ: z / conj z = - z.
+    move/(_ (z - conj z)); rewrite !rmorphB conjK opprB => zJ.
     by apply/mul2I/(canRL (subrK _)); rewrite -addrA zJ // addrC subrK.
   have [-> | nz_z] := eqVneq z 0; first exact: rmorph0.
   have [u Ru [v Rv Dz]]:
-    exists2 u, conjL u = u & exists2 v, conjL v = v & (u + z * v) ^+ 2 = z.
-  - pose y := sqrt z; exists ((y + conjL y) / 2%:R).
-      by rewrite fmorph_div rmorphD conjL_K addrC rmorph_nat.
-    exists ((y - conjL y) / (z *+ 2)).
+    exists2 u, conj u = u & exists2 v, conj v = v & (u + z * v) ^+ 2 = z.
+  - pose y := sqrt z; exists ((y + conj y) / 2%:R).
+      by rewrite fmorph_div rmorphD conjK addrC rmorph_nat.
+    exists ((y - conj y) / (z *+ 2)).
       rewrite fmorph_div rmorphMn zJ mulNrn invrN mulrN -mulNr rmorphB opprB.
-      by rewrite conjL_K.
+      by rewrite conjK.
     rewrite -(mulr_natl z) invfM (mulrC z) !mulrA divfK // -mulrDl addrACA.
     (* FIX ME : had to add the explicit pattern *)
     by rewrite subrr addr0 -mulr2n -[_ *+ 2]mulr_natr mulfK ?Neq0 ?sqrtK.
@@ -157,14 +154,14 @@ Proof.
   by case/pred2P=> ->; [exists false | exists true]; rewrite mulr_sign.
 Qed.
 
-Definition norm x := sqrt x * conjL (sqrt x).
+Definition norm x := sqrt x * conj (sqrt x).
 
-Lemma normK x : norm x ^+ 2 = x * conjL x.
+Lemma normK x : norm x ^+ 2 = x * conj x.
 Proof.
   by rewrite exprMn -rmorphX sqrtK.
 Qed.
 
-Lemma normE x y : y ^+ 2 = x -> norm x = y * conjL y.
+Lemma normE x y : y ^+ 2 = x -> norm x = y * conj y.
 Proof.
   rewrite /norm => /sqrtE[b /(canLR (signrMK b)) <-].
   by rewrite !rmorphM rmorph_sign mulrACA -mulrA signrMK.
@@ -194,15 +191,15 @@ Proof. by rewrite /le subr0. Qed.
 Lemma leB x y: le x y = le 0 (y - x).
 Proof. by rewrite posE. Qed.
 
-Lemma posP x : reflect (exists y, x = y * conjL y) (le 0 x).
+Lemma posP x : reflect (exists y, x = y * conj y) (le 0 x).
 Proof.
   rewrite posE; apply: (iffP eqP) => [Dx | [y {x}->]]; first by exists (sqrt x).
-  by rewrite (normE (normK y)) rmorphM conjL_K (mulrC (conjL _)) -expr2 normK.
+  by rewrite (normE (normK y)) rmorphM conjK (mulrC (conj _)) -expr2 normK.
 Qed.
 
-Lemma posJ x : le 0 x -> conjL x = x.
+Lemma posJ x : le 0 x -> conj x = x.
 Proof.
-  by case/posP=> {x}u ->; rewrite rmorphM conjL_K mulrC.
+  by case/posP=> {x}u ->; rewrite rmorphM conjK mulrC.
 Qed.
 
 Lemma pos_linear x y : le 0 x -> le 0 y -> le x y || le y x.
@@ -213,17 +210,17 @@ Qed.
 
 Lemma sposDl x y : lt 0 x -> le 0 y -> lt 0 (x + y).
 Proof.
-  have sqrtJ z : le 0 z -> conjL (sqrt z) = sqrt z.
+  have sqrtJ z : le 0 z -> conj (sqrt z) = sqrt z.
     rewrite posE -{2}[z]sqrtK -subr_eq0 -mulrBr mulf_eq0 subr_eq0.
     by case/pred2P=> ->; rewrite ?rmorph0.
   case/andP=> nz_x /sqrtJ uJ /sqrtJ vJ.
   set u := sqrt x in uJ; set v := sqrt y in vJ; pose w := u + i * v.
-  have ->: x + y = w * conjL w.
+  have ->: x + y = w * conj w.
     rewrite rmorphD rmorphM iJ uJ vJ mulNr mulrC -subr_sqr sqrMi opprK.
     by rewrite !sqrtK.
   apply/andP; split; last by apply/posP; exists w.
   rewrite -normK expf_eq0 //=; apply: contraNneq nz_x => /norm_eq0 w0.
-  rewrite -[x]sqrtK expf_eq0 /= -/u -(inj_eq mul2I) !mulr2n -{2}(rmorph0 conjL).
+  rewrite -[x]sqrtK expf_eq0 /= -/u -(inj_eq mul2I) !mulr2n -{2}(rmorph0 conj).
   by rewrite -w0 rmorphD rmorphM iJ uJ vJ mulNr addrACA subrr addr0.
 Qed.
 
@@ -239,7 +236,7 @@ Proof.
   have posD u v: le 0 u -> le 0 v -> le 0 (u + v).
     have [-> | nz_u u_ge0 v_ge0] := eqVneq u 0; first by rewrite add0r.
     by have /andP[]: lt 0 (u + v) by rewrite sposDl // /lt nz_u.
-  have le_sqr u v: conjL u = u -> le 0 v -> le (u ^+ 2) (v ^+ 2) -> le u v.
+  have le_sqr u v: conj u = u -> le 0 v -> le (u ^+ 2) (v ^+ 2) -> le u v.
     case: (eqVneq u 0) => [-> //|nz_u Ru v_ge0].
     have [u_gt0 | u_le0 _] := boolP (lt 0 u).
       by rewrite leB (leB u) subr_sqr mulrC addrC; apply: sposM; apply: sposDl.
@@ -248,19 +245,17 @@ Proof.
     by rewrite mulr0 -subr_sqr normK Ru subrr.
   have pos_norm z: le 0 (norm z) by apply/posP; exists (sqrt z).
   rewrite le_sqr ?posJ ?posD // sqrrD !normK -normM rmorphD mulrDl !mulrDr.
-  rewrite addrA addrC !addrA -(addrC (y * conjL y)) !addrA.
+  rewrite addrA addrC !addrA -(addrC (y * conj y)) !addrA.
   move: (y * _ + _) => u; rewrite -!addrA leB opprD addrACA {u}subrr add0r -leB.
   rewrite {}le_sqr ?posD //.
-    by rewrite rmorphD !rmorphM !conjL_K addrC mulrC (mulrC y).
+    by rewrite rmorphD !rmorphM !conjK addrC mulrC (mulrC y).
   rewrite -mulr2n -mulr_natr exprMn normK -natrX mulr_natr sqrrD mulrACA.
   rewrite -rmorphM (mulrC y x) addrAC leB mulrnA mulr2n opprD addrACA.
   rewrite subrr addr0 {2}(mulrC x) rmorphM mulrACA -opprB addrAC -sqrrB -sqrMi.
-  apply/posP; exists (i * (x * conjL y - y * conjL x)); congr (_ * _).
-  rewrite !(rmorphM, rmorphB) iJ !conjL_K mulNr -mulrN opprB.
+  apply/posP; exists (i * (x * conj y - y * conj x)); congr (_ * _).
+  rewrite !(rmorphM, rmorphB) iJ !conjK mulNr -mulrN opprB.
   by rewrite (mulrC x) (mulrC y).
 Qed.
-
-Check (fun x y => erefl (lt x y)).
 
 Lemma le_refl : reflexive le.
 Proof.
@@ -287,16 +282,29 @@ have := sposDl zBxsP yBzP.
 by rewrite -!addrA addrC -addrA subrK addrC => /andP[].
 Qed.
 
-#[verbose]
+(* This works *)
 HB.instance Definition _ := 
     Order.IsPOrdered.Build ring_display L
            (fun x y => erefl (lt x y)) le_refl le_anti le_trans.
 
+Check
+  Num.IntegralDomain_IsNumDomain.Build L normD sposD norm_eq0 
+         pos_linear normM (fun x y => erefl (le x y)) 
+                          (fun x y => erefl (lt x y)).
+
+(* This does not *)
+
+HB.instance Definition _ := 
+  Num.IntegralDomain_IsNumDomain.Build L normD sposD norm_eq0 
+         pos_linear normM (fun x y => erefl (le x y)) 
+                          (fun x y => erefl (lt x y)).
+ normD norm_eq0 normrMn normN).
+    
 (* STOP *)
 
 Definition L := tag Fundamental_Theorem_of_Algebraics.
 
-Definition conjL : {rmorphism L -> L} :=
+Definition conj : {rmorphism L -> L} :=
 
 Check 
 Check Num.Zmodule_IsNormed.Build ring_display L normD.
