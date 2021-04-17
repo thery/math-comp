@@ -62,13 +62,13 @@ Import Order.TTheory GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
 
-HB.factory Record Complex L of GRing.ClosedField L := {
+HB.factory Record IsComplex L of GRing.ClosedField L := {
   conj :  {rmorphism L -> L};
   conjK : involutive conj;
   conj_nt : ~ conj =1 id
 }.
 
-HB.builders Context L of Complex L.
+HB.builders Context L of IsComplex L.
 
 Lemma nz2: 2%:R != 0 :> L.
 Proof.
@@ -257,51 +257,36 @@ Proof.
   by rewrite (mulrC x) (mulrC y).
 Qed.
 
-Lemma le_refl : reflexive le.
-Proof.
-move=> x.
-rewrite /le subrr /norm /sqrt; case: sig_eqW => /= x1.
-rewrite !big_ord_recr !mul0r /= !addr0 /= big_ord0.
-by move=>/eqP; rewrite sqrf_eq0 => /eqP->; rewrite mul0r.
-Qed.
-
-Lemma le_anti : antisymmetric le.
-Proof.
-move=> x y.
-rewrite /le -normN opprB => /andP[/eqP->] /eqP H.
-by apply: mul2I; rewrite !mulr2n -{1}(subrK x y) H -addrAC -2!addrA subrK.
-Qed.
-
-Lemma le_trans : transitive le.
-Proof.
-move=> z x y; rewrite !(leB x) (leB z) => zBxP yBzP.
-have [zxE|/eqP zxD] := (z - x =P 0).
-  by rewrite -(subrK z y) -addrA zxE addr0.
-have zBxsP : lt 0 (z - x) by rewrite /lt zBxP zxD.
-have := sposDl zBxsP yBzP.
-by rewrite -!addrA addrC -addrA subrK addrC => /andP[].
-Qed.
-
-(* This works *)
-HB.instance Definition _ := 
-    Order.IsPOrdered.Build ring_display L
-           (fun x y => erefl (lt x y)) le_refl le_anti le_trans.
-
-Check
-  Num.IntegralDomain_IsNumDomain.Build L normD sposD norm_eq0 
-         pos_linear normM (fun x y => erefl (le x y)) 
-                          (fun x y => erefl (lt x y)).
-
-(* This does not *)
-
 HB.instance Definition _ := 
   Num.IntegralDomain_IsNumDomain.Build L normD sposD norm_eq0 
          pos_linear normM (fun x y => erefl (le x y)) 
                           (fun x y => erefl (lt x y)).
-    
+
+HB.instance Definition _ :=
+  Num.NumField_IsImaginary.Build L (sqrtK _) normK.
+
+HB.end.
+
 (* STOP *)
 
-Definition L := tag Fundamental_Theorem_of_Algebraics.
+Definition L : closedFieldType := tag Fundamental_Theorem_of_Algebraics.
+
+Definition conjL : {rmorphism L -> L} :=
+  s2val (tagged Fundamental_Theorem_of_Algebraics).
+
+Fact conjL_K : involutive conjL.
+Proof. exact: s2valP (tagged Fundamental_Theorem_of_Algebraics). Qed.
+
+Fact conjL_nt : ~ conjL =1 id.
+Proof. exact: s2valP' (tagged Fundamental_Theorem_of_Algebraics). Qed.
+
+
+(* This fail *)
+Check IsComplex.Build L conjL_K conjL_nt.
+
+HB.instance Definition _ := 
+  Complex.Build L conjL_K conjL_nt.
+
 
 Definition conj : {rmorphism L -> L} :=
 
