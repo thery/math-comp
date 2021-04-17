@@ -267,9 +267,7 @@ HB.instance Definition _ :=
 
 HB.end.
 
-(* STOP *)
-
-Definition L : closedFieldType := tag Fundamental_Theorem_of_Algebraics.
+Definition L := tag Fundamental_Theorem_of_Algebraics.
 
 Definition conjL : {rmorphism L -> L} :=
   s2val (tagged Fundamental_Theorem_of_Algebraics).
@@ -287,18 +285,7 @@ Check IsComplex.Build L conjL_K conjL_nt.
 HB.instance Definition _ := 
   Complex.Build L conjL_K conjL_nt.
 
-
-Definition conj : {rmorphism L -> L} :=
-
-Check 
-Check Num.Zmodule_IsNormed.Build ring_display L normD.
-
-HB.instance Definition _ := 
- Num.Zmodule_IsNormed.Build L normD.
-
-
-by exists (NumMixin normD sposD norm_eq0 pos_linear normM (rrefl _) (rrefl _)).
-Qed.
+(* STOP *)
 
 (* The Num mixin for an algebraically closed field with an automorphism of    *)
 (* order 2, making it into a field of complex numbers.                        *)
